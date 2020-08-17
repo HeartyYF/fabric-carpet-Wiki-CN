@@ -1,12 +1,12 @@
-# Blocks / World API
+# 方块 / 世界 API
 
-## Specifying blocks
+## 指定方块
 
 ### `block(x, y, z)`, `block(l(x,y,z))`, `block(state)`
 
-Returns either a block from specified location, or block with a specific state (as used by `/setblock` command), 
-so allowing for block properties, block entity data etc. Blocks otherwise can be referenced everywhere by its simple 
-string name, but its only used in its default state.
+返回指定位置的方块，或具有某个特定状态的方块（就像 `/setblock` 命令那样）， 
+因此可以有方块属性、方块实体数据之类的。如果没有这些数据的话，方块可以
+简单地通过字符串名称在各处被引用，但是这样就是默认的方块状态。
 
 <pre>
 block('air')  => air
@@ -15,39 +15,39 @@ block(0,0,0) == block('bedrock')  => 1
 block('hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') => hopper
 </pre>
 
-Retrieving a block with `block` function has also a side-effect of evaluating its current state and data. 
-So if you use it later it will reflect block state and data of the block that was when block was called, rather than
-when it was used. Block values passed in various places like `scan` functions, etc, are not fully evaluated unless 
-its properties are needed. This means that if the block at the location changes before its queried in the program this 
-might result in getting the later state, which might not be desired. Consider the following example:
+使用 `block` 函数检索一个方块其实有计算其当前状态和数据的副作用。
+如果你检索出的方块值并没有当即使用，它所反映出的方块状态和数据是调用时的，
+而不是使用这个方块值时候的。而使用 `scan` 之类的函数传递的方块值，却直到需要使用到其属性
+时才会计算。这意味着，如果在在查询指定位置的方块后该方块发生了变化，
+可能就会出现结果和实际不一致的情况。考虑这样一个例子：
 
 <pre>set(10,10,10,'stone');
 scan(10,10,10,0,0,0, b = _);
 set(10,10,10,'air');
-print(b); // 'air', block was remembered 'lazily', and evaluated by `print`, when it was already set to air
+print(b); // 'air'，方块的记忆方式是 'lazily'，直到 `print` 才被计算，在那时已被设置为 air
 set(10,10,10,'stone');
 scan(10,10,10,0,0,0, b = block(_));
 set(10,10,10,'air');
-print(b); // 'stone', block was evaluated 'eagerly' but call to `block`
+print(b); // 'stone'，调用 `block` 时方块被 'eagerly' 计算`
 </pre>
 
-## World Manipulation
+## 世界操控
 
-All the functions below can be used with block value, queried with coord triple, or 3-long list. All `pos` in the 
-functions referenced below refer to either method of passing block position.
+下列所有函数都可以以方块值使用，用坐标三元组或长度为三的列表查询。
+函数中的 `pos` 都是指传递方块位置的任意方法。
 
 ### `set(pos, block, property?, value?, ..., block_data?)`, `set(pos, block, l(property?, value?, ...), block_data?)`
 
-First part of the `set` function is either a coord triple, list of three numbers, or other block with coordinates. 
-Second part, `block` is either block value as a result of `block()` function string value indicating the block name, 
-and optional `property - value` pairs for extra block properties. Optional `block_data` include the block data to 
-be set for the target block.
+`set` 函数的第一部分要么是坐标三元组，要么是三个数的列表，要么是某个方块的坐标。
+第二部分，`block` 是 `block()` 函数的结果、表示方块名称的字符串格式方块值，
+可选的 `property - value` 键值对表示额外的方块属性。可选的 `block_data` 包含要向
+目标方块设置的方块属性。
 
-If `block` is specified only by name, then if a 
-destination block is the same the `set` operation is skipped, otherwise is executed, for other potential extra
-properties.
+如果 `block` 仅通过名称指定，那么如果目标方块与之相同，
+则跳过 `set` 操作，否则就会执行，
+因为可能有不同的额外属性。
 
-The returned value is either the block state that has been set, or `false` if block setting was skipped
+返回值是被设置的方块状态，如果操作被跳过则返回 `false`
 
 <pre>
 set(0,5,0,'bedrock')  => bedrock
@@ -55,31 +55,31 @@ set(l(0,5,0), 'bedrock')  => bedrock
 set(block(0,5,0), 'bedrock')  => bedrock
 scan(0,5,0,0,0,0,set(_,'bedrock'))  => 1
 set(pos(players()), 'bedrock')  => bedrock
-set(0,0,0,'bedrock')  => 0   // or 1 in overworlds generated in 1.8 and before
+set(0,0,0,'bedrock')  => 0   // 或 1，对于 1.8 及之前生成的主世界
 scan(0,100,0,20,20,20,set(_,'glass'))
-    // filling the area with glass
+    // 用草方块填充
 scan(0,100,0,20,20,20,set(_,block('glass')))
-    // little bit faster due to internal caching of block state selectors
+    // 由于方块状态选择器的内部缓存机制，这样稍微快一点
 b = block('glass'); scan(0,100,0,20,20,20,set(_,b))
-    // yet another option, skips all parsing
-set(x,y,z,'iron_trapdoor')  // sets bottom iron trapdoor
-set(x,y,z,'iron_trapdoor[half=top]')  // Incorrect. sets bottom iron trapdoor - no parsing of properties
-set(x,y,z,'iron_trapdoor','half','top') // correct - top trapdoor
-set(x,y,z, block('iron_trapdoor[half=top]')) // also correct, block() provides extra parsing
-set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // extra block data
-set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // same
+    // 另一种选择，跳过了语法解析
+set(x,y,z,'iron_trapdoor')  // 置为底部的铁活板门
+set(x,y,z,'iron_trapdoor[half=top]')  // 错误。置为底部的铁活板门——未解析属性
+set(x,y,z,'iron_trapdoor','half','top') // 正确——顶部的活板门
+set(x,y,z, block('iron_trapdoor[half=top]')) // 也正确，block() 提供了额外的解析
+set(x,y,z,'hopper[facing=north]{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') // 额外的方块数据
+set(x,y,z,'hopper', l('facing', 'north'), nbt('{Items:[{Slot:1b,id:"minecraft:slime_ball",Count:16b}]}') ) // 同上
 </pre>
 
 ### `without_updates(expr)`
 
-Evaluates subexpression without causing updates when blocks change in the world.
+当方块发生变化时，计算子表达式的值而不引起更新。
 
-For synchronization sake, as well as from the fact that suppressed update can only happen within a tick,
-the call to the `expr` is docked on the main server task.
+为了不影响同步，也由于更新抑制只能在同刻内发生这一事实，
+对 `expr` 的调用对接于主服务器任务。
 
-Consider following scenario: We would like to generate a bunch of terrain in a flat world following a perlin noise 
-generator. The following code causes a cascading effect as blocks placed on chunk borders will cause other chunks to get 
-loaded to full, thus generated:
+考虑这一场景：我们想在超平坦世界里按照 Perlin 噪声发生器生成一堆地形。
+下列代码会引起级联效应，因为处在区块边界处的方块更新会引起其他区块被加载， 
+从而产生不好的后果：
 
 <pre>
 __config() -> m(l('scope', 'global'));
@@ -92,7 +92,7 @@ __on_chunk_generated(x, z) -> (
 )
 </pre>
 
-The following addition resolves this issue, by not allowing block updates past chunk borders:
+下面增加的内容通过不允许方块更新跨过区块边界解决了这一问题：
 
 <pre>
 __config() -> m(l('scope', 'global'));
@@ -145,6 +145,11 @@ markers for scarpet apps. `meeting` is the only one with increased max occupancy
 
 Changes the biome at that block position. if update is specified and false, then chunk will not be refreshed
 on the clients. Biome changes can only be send to clients with the entire data from the chunk.
+
+Setting a biome is now (as of 1.16) dimension specific. In the overworld and the end changing the biome
+is only effective if you set it at y=0, and affects the entire column of. In the nether - you have to use the
+specific Y coordinate of the biome you want to change, and it affects roughly 4x4x4 area (give or take some random
+noise).
 
 ### `update(pos)`
 
@@ -725,3 +730,24 @@ All generated structures will retain their properties, like mob spawning, howeve
 itself has certain rules to spawn mobs, like plopping a nether fortress in the overworld will not spawn nether mobs, 
 because nether mobs can spawn only in the nether, but plopped in the nether - will behave like a valid nether fortress.
 
+### `custom_dimension(name, seed?)`
+
+使用给定的种子生成名为 `'name'` 的维度。使用和主世界相同的世界生成器设置， 
+自定义的种子是可选的，若留空则使用当前世界的种子。 
+
+如果给定名称的维度已经存在，则返回 `false`，除此之外什么都不做。
+
+使用 `custom_dimension` 创建的维度仅在游戏重启前存在——和数据包相同，如果你移除数据包的话。
+但是所有的世界数据其实都是保存了的。如果你的应用重新创建了这个维度，会加载已经保存的数据。
+这意味着，程序员应确保自定义维度设置存储在了应用数据内，并且在想要使用之前创建过的世界时，
+以相同的设置恢复之前的自定义维度。鉴于原版游戏只记录世界数据，而不记录世界设置，如果维度
+尚未通过 `custom_dimension` 配置，而应用还未初始化这一维度，玩家就会被重新定位到主世界的
+相同坐标那一位置。
+
+自定义的维度列表（可以用在类似于 `/execute in <dim>` 的地方）仅会在
+加入游戏时发向客户端， 这意味着玩家加入游戏后创建的自定义世界不会被
+原版的命令自动补全，但是是可以成功运行的。这是由于带有维度的数据包总
+是会随着游戏一起加载，并且被假定未被修改。
+
+`custom_dimension` 是一项实验性功能，并且仍在开发中。
+除自定义种子外的更多的自定义选项将在未来加入。
