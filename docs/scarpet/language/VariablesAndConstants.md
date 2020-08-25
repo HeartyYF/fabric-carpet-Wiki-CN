@@ -1,29 +1,32 @@
-# Variables and Constants
+# 变量和常量
 
-`scarpet` provides a number of constants that can be used literally in scripts
+`scarpet` 提供了一些可以直接在脚本中使用的常量
 
-*   `null`: nothing, zilch, not even false
-*   `true`: pure true, or just 1 (one)
-*   `false`: false truth, or true falsth, 0 (zero) actually
-*   `pi`: for the fans of perimeters, its a perimeter of an apple pi of diameter 1\. About 3.14
-*   `euler`: clever guy. Derivative of its exponent is goto 1\. About 2.72
+*   `null`：虚无，飘渺，甚至不等于 false
+*   `true`：纯粹的 true，或者是 1（一）
+*   `false`：非常假，不过实际是 0（零）
+*   `pi`：如果你有一个直径是 1 的圆，它周长就是 pi。大概 3.14
+*   `euler`：自然对数是 1 的东西。大概 2.72
 
-Apart from that, there is a bunch of system variables, that start with `_` that are set by `scarpet` built-ins, 
-like `_`, typically each consecutive value in loops, `_i` indicating iteration, or `_a` like an accumulator 
-for `reduce` function. Certain calls to Minecraft specific calls would also set `_x`, `_y`, `_z`, indicating 
-block positions. All variables starting with `_` are read-only, and cannot be declared and modified in client code.
+除了上述那些之外，还有一堆系统变量，以 `_` 打头，由 `scarpet` 内置的某些东西设置，
+比如说 `_` 这个变量，一般说来是循环变量，`_i` 表示迭代，`_a` 表示 `reduce` 函数的累加器。
+某些特定的对 Minecraft 的调用还会设置 `_x`、`_y`、`_z`，表示方块位置。
+所有以 `_` 开头的变量都是只读的，不能在客户端代码中声明和修改。
 
-## Literals
+## 字面量
 
-`scarpet` accepts numeric and string liters constants. Numbers look like `1, 2.5, -3e-7, 0xff,` and are internally 
-represented as Java's `double` but `scarpet` will try to trim trailing zeros as much as possible so if you need to 
-use them as intergers, you can. Strings use single quoting, for multiple reasons, but primarily to allow for 
-easier use of strings inside doubly quoted command arguments (when passing a script as a parameter of `/script fill` 
-for example), or when typing in jsons inside scarpet (to feed back into a `/data merge` command for example). 
-Strings also use backslashes `\` for quoting special characters, in both plain strings and regular expressions
+`scarpet` 接受数字和字符串字面常量。看起来像 `1, 2.5, -3e-7, 0xff,` 这样的数字，内部会主要以
+Java 的`双精度浮点`表示，但 `scarpet` 会尽量去掉结尾的 0，
+所以如果你需要把它们作为整型或长整型使用——确实可以。
+然而，对一个“数字”的任何操作——即使能被长整型正确表示——也会被四舍五入成双精度浮点。
+
+字符串用单引号。原因有很多，最重要的是为了在双引号的命令参数中更方便地使用字符串
+（比如，传递一个脚本名称作为 `/script fill` 的参数时），
+或者在 scarpet 中输入 json 时（比如，反馈到 `/data merge` 命令中）。
+在纯字符串和正则表达式中，可使用反斜杠 `\` 转义特殊字符。
 
 <pre>
 'foo'
-print('This doesn\'t work')
-nbt ~ '\\.foo'   // matching '.' as a '.', not 'any character match'
+print('比如，我要单引号\'')
+nbt ~ '\\.foo'   // 匹配 '.' 为 '.'，而不是'任意字符匹配'
 </pre>
